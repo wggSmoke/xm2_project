@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="http://localhost:9090/ssm_war_exploded/">
+    <meta charset="UTF-8">
+    <script src="js/jquery-2.2.2.js"></script>
+    <title>Title</title>
+</head>
+<body>
+<div>部门员工</div>
+<hr>
+<table id="tables" border="1" align="center" >
+    <tr>
+        <td>部门编号</td>
+        <td>部门人数</td>
+        <td>平均薪资</td>
+    </tr>
+
+</table>
+</body>
+</html>
+<script>
+    //console.log(location.search);
+    function parseUrl(url){
+        //解析url
+        if(url.indexOf("?")){
+            url = url.substring(url.indexOf("?")+1);
+            //console.log(url);
+            var param = url.split("&");
+            var obj = new Object();
+            for(var i = 0; i < param.length; i++){
+                var keyValue = param[i].split("=");
+                var key = keyValue[0];
+                var value = keyValue[1];
+                obj[key] = value;
+            }
+            //console.log(obj["name"]+","+obj["password"]);
+            return obj;
+        }
+    }
+
+
+
+
+    $(function () {
+        var param=parseUrl(location.href);
+        $.ajax({
+            url:"salarys/"+param["depId"],
+            dataType:"json",
+            type:"get",
+            success:function (data) {
+                    console.log(data);
+                $("tables").append("<tr>" +
+                    "<td onclick='cat()'><a href=''>"+data.result.depId+"</a></td>" +
+                    "<td onclick='cat()'><a href=''>"+data.result.depNumber+"</a></td>" +
+                    "<td onclick='cat()'><a href=''>"+data.result.depSalary+"</a></td>" +
+                    "</tr>")
+            }
+        })
+
+
+    })
+    $(function cat() {
+        var param=parseUrl(location.href);
+        $.ajax({
+            url:"findEmp/"+param("depId"),
+            dataType:"json",
+            type:"get",
+            success:function (data) {
+
+                for (var i=0;i<data.result.list.length;i++){
+                    $("tables").append("<tr>" +
+                        "<td><div>"+data.result.list[i].empName+"</div></td>" +
+                        "<td><div id='"+data.result.list[i].empId+"'>"+data.result.list[i].salary+"</div></td>" +
+                        "<td><div>"+data.result.list[i].pushTime+"</div></td>" +
+                        "<td><input type='button' onclick='change(data.result.list[i].empId)' value='修改'></td>" +
+                        "</tr>")
+                }
+
+            }
+        })
+    })
+
+    $(function change(aaa) {
+        $.ajax({
+
+        })
+
+    })
+
+
+
+
+</script>

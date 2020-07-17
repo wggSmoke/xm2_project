@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="http://localhost:9090/ssm_war_exploded/">
+    <meta charset="UTF-8">
+    <script src="js/jquery-2.2.2.js"></script>
+    <title>Title</title>
+</head>
+<body>
+
+<div class="hands"></div>
+<hr>
+</body>
+</html>
+<script>
+    $(function () {
+        $.ajax({
+            url:"hands",
+            dataType:"json",
+            type:"get",
+            success:function (data) {
+                console.log(data.code);
+                for (var i=0;i<data.result.length;i++){
+                    $(".hands").append("<a href='emps.html?depId="+data.result.depId+"'>"+data.result.depName+"</a>")
+                }
+
+            }
+
+
+        })
+
+
+    })
+
+
+</script>

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx" xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc" xmlns:cache="http://www.springframework.org/schema/cache"
+       xsi:schemaLocation="
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+        http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache.xsd">
+
+    <context:component-scan base-package="com.igeek.service"></context:component-scan>
+
+    <!--配置数据源-->
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">
+        <property name="username" value="root"></property>
+        <property name="password" value="1234"></property>
+        <property name="url" value="jdbc:mysql://localhost:3306/test"></property>
+        <property name="driverClassName" value="com.mysql.jdbc.Driver"></property>
+        <property name="minIdle" value="5"></property>
+        <property name="maxActive" value="50"></property>
+        <property name="initialSize" value="10"></property>
+    </bean>
+
+    <!--配置sqlSessionfactory用于替换mybaties中的sqlSessionFactory-->
+    <bean class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"></property>
+        <property name="configLocation" value="classpath:mybatis.xml"></property>
+    </bean>
+    <!--配置mybatis中生成到类的实例扫描器-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.igeek.dao"></property>
+    </bean>
+
+
+    <!--1,1.Spring管理项目组件与事务处理 ******************************************-->
+    <!--配置事务管理器-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <!--注入数据源-->
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+    <!--配置事务拦截器（事务通知）-->
+    <!--需要注入事务管理器-->
+    <tx:advice id="transactionInterceptor" transaction-manager="transactionManager">
+        <!--配置事务的隔离性和传播行为-->
+        <tx:attributes>
+            <!--name表示要作用事务的方法名-->
+            <!--isolation设置事务的隔离级别-->
+            <!--propagation设置事务的传播性-->
+            <tx:method name="find*" isolation="READ_COMMITTED" propagation="REQUIRED"></tx:method>
+            <tx:method name="modify*" isolation="DEFAULT" propagation="REQUIRED"></tx:method>
+            <tx:method name="update*"></tx:method>
+            <tx:method name="insert*"></tx:method>
+            <tx:method name="add*"></tx:method>
+            <tx:method name="save*"></tx:method>
+            <tx:method name="delete*"></tx:method>
+        </tx:attributes>
+    </tx:advice>
+    <!--配置事务的AOP切入-->
+    <aop:config>
+        <aop:pointcut id="transactionPoint" expression="execution(* com.igeek.service.*.*(..))"></aop:pointcut>
+        <aop:advisor advice-ref="transactionInterceptor" pointcut-ref="transactionPoint"></aop:advisor>
+    </aop:config>
+
+    <!--1.1结束*****************************************************************-->
+    <!--1.2整合radis***************************************************************-->
+    <!-- redis数据池配置 -->
+    <bean id="poolConfig" class="redis.clients.jedis.JedisPoolConfig">
+        <!-- 最大空闲数 -->
+        <property name="maxIdle" value="5" />
+        <!-- 最大空连接数 -->
+        <property name="maxTotal" value="20" />
+        <!-- 最大等待时间 -->
+        <property name="maxWaitMillis" value="2000" />
+        <!-- 返回连接时，检测连接是否成功 -->
+        <property name="testOnBorrow" value="true" />
+    </bean>
+
+
+    <!-- Spring-redis连接池管理工厂 -->
+    <bean id="jedisConnectionFactory" class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory">
+        <!-- IP地址 -->
+        <property name="hostName" value="192.168.87.128" />
+        <!-- 端口号 -->
+        <property name="port" value="6380" />
+        <!-- 连接池配置引用 -->
+        <property name="poolConfig" ref="poolConfig" />
+        <!-- usePool：是否使用连接池 -->
+        <property name="usePool" value="true"/>
+    </bean>
+
+
+    <!-- redis template definition -->
+    <bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate">
+        <property name="connectionFactory" ref="jedisConnectionFactory" />
+        <property name="keySerializer">
+            <bean class="org.springframework.data.redis.serializer.StringRedisSerializer" />
+        </property>
+        <property name="valueSerializer">
+            <bean class="org.springframework.data.redis.serializer.JdkSerializationRedisSerializer" />
+        </property>
+        <property name="hashKeySerializer">
+            <bean class="org.springframework.data.redis.serializer.StringRedisSerializer" />
+        </property>
+        <property name="hashValueSerializer">
+            <bean class="org.springframework.data.redis.serializer.JdkSerializationRedisSerializer" />
+        </property>
+        <!--开启事务  -->
+        <property name="enableTransactionSupport" value="true"></property>
+    </bean>
+
+</beans>

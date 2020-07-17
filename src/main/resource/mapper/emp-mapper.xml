@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN"
+        "http://ibatis.apache.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.igeek.dao.empDao">
+        <resultMap id="empMap" type="number">
+            <id property="depId" column="depId"></id>
+            <result property="depNumber" column="depNumber"></result>
+            <result property="depSalary" column="depSalary"></result>
+        </resultMap>
+
+    <select id="findSomeSalary" resultMap="">
+        select dep.depId, count(empName) as depNumber,avg(salary) as depSalary
+        from dep left join emp on dep.depId=emp.depId where dep.depId=#{2}
+    </select>
+
+    <select id="findByDepId" resultType="emp">
+        select empName,salary,pushTime from dep left join emp on dep.depId=emp.depId where dep.depId=#{aa}
+    </select>
+</mapper>
